@@ -1,0 +1,123 @@
+name: Workspace Service CI/CD
+
+on:
+  push:
+    branches: 
+      - main
+      - release
+  pull_request:
+    branches: 
+      - release
+
+env:
+  ACR_NAME: forsicoacr
+  REGISTRY: forsicoacr.azurecr.io
+  IMAGE_NAME: workspace-service
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      
+      - name: Set Environment Variables
+        run: |
+          if [[ ${{ github.ref }} == 'refs/heads/main' ]]; then
+            echo "ENVIRONMENT=staging" >> $GITHUB_ENV
+            echo "TAG_SUFFIX=staging" >> $GITHUB_ENV
+          elif [[ ${{ github.ref }} == 'refs/heads/release' ]]; then
+            echo "ENVIRONMENT=prod" >> $GITHUB_ENV
+            echo "TAG_SUFFIX=prod" >> $GITHUB_ENV
+          fi
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests
+        run: npm test
+
+      - name: Run linting
+        run: npm run lint
+
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Login to ACR
+        uses: azure/docker-login@v1
+        with:
+          login-server: ${{ env.REGISTRY }}
+          username: ${{ secrets.AZURE_CR_USERNAME }}
+          password: ${{ secrets.AZURE_CR_PASSWORD }}
+
+      - name: Build and Push
+        run: |
+          docker build . -t ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}-${{ env.TAG_SUFFIX }}
+          docker build . -t ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest-${{ env.TAG_SUFFIX }}
+          docker push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}-${{ env.TAG_SUFFIX }}
+          docker push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest-${{ env.TAG_SUFFIX }}
+
+  deploy-staging:
+    needs: build-and-push
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment:
+      name: staging
+      url: https://staging-api.forsico.com
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          repository: digitsontr/forsico-infrastructure
+          token: ${{ secrets.GH_PAT }}
+          
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+          
+      - name: Set AKS Context
+        uses: azure/aks-set-context@v1
+        with:
+          creds: '${{ secrets.AZURE_CREDENTIALS }}'
+          cluster-name: forsico-aks
+          resource-group: forsico-board-rg
+
+      - name: Deploy to Staging
+        run: |
+          kubectl apply -k k8s/overlays/staging/workspace-service
+
+  deploy-prod:
+    needs: build-and-push
+    if: github.ref == 'refs/heads/release'
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: https://api.forsico.com
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          repository: digitsontr/forsico-infrastructure
+          token: ${{ secrets.GH_PAT }}
+          
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+          
+      - name: Set AKS Context
+        uses: azure/aks-set-context@v1
+        with:
+          creds: '${{ secrets.AZURE_CREDENTIALS }}'
+          cluster-name: forsico-aks
+          resource-group: forsico-board-rg
+
+      - name: Deploy to Production
+        run: |
+          kubectl apply -k k8s/overlays/prod/workspace-service 

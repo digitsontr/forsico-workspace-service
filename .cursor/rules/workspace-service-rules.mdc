@@ -1,0 +1,135 @@
+---
+description: 
+globs: *.js,*.html,*.json
+alwaysApply: true
+---
+# Node.js (JavaScript/TypeScript) Development Team Rules and Best Practices
+
+## General Guidelines
+
+1. **Leverage Node.js Strengths**
+   - Build scalable, event-driven, and non-blocking applications.
+   - Use asynchronous programming effectively (`async/await` or Promises).
+
+2. **Consistency and Readability**
+   - Follow a consistent project structure and coding style.
+   - Use tools like `ESLint` and `Prettier` for formatting and linting.
+
+3. **Continuous Learning**
+   - Stay updated with Node.js releases and ecosystem libraries.
+   - Share new insights and best practices within the team.
+
+---
+
+## Folder Architecture
+
+### 1. Core Structure
+
+```
+project_root/
+├── src/                 # Main source code
+│   ├── controllers/     # Route handlers
+│   ├── routes/          # API route definitions
+│   ├── models/          # Database models (if applicable)
+│   ├── services/        # Business logic
+│   ├── middleware/      # Express middleware
+│   ├── utils/           # Utility functions
+│   ├── config/          # Configuration files
+│   ├── tests/           # Test cases (unit, integration)
+│   └── index.js         # Application entry point
+├── public/              # Static assets (if applicable)
+├── docs/                # Documentation
+├── scripts/             # Automation and build scripts
+├── .env                 # Environment variables
+├── package.json         # Dependencies and metadata
+├── tsconfig.json        # TypeScript configuration (if applicable)
+├── README.md            # Project overview
+└── .gitignore           # Git ignored files
+```
+
+---
+
+## Coding Standards
+
+1. **Code Formatting**
+   - Use `Prettier` for consistent formatting.
+   - Lint code with `ESLint` using recommended configurations.
+
+2. **Error Handling**
+   - Use structured error handling with `try-catch` blocks.
+   - Create custom error classes for specific error types.
+   - Log meaningful error messages with a library like `winston` or `pino`.
+
+3. **Language**
+   - Don't Use TypeScript, we need to use javascript
+
+4. **Asynchronous Programming**
+   - Use `async/await` for readability and maintainability.
+   - Handle promise rejections with `.catch()` or `try-catch`.
+
+5. **Documentation**
+   - Use JSDoc or TypeScript annotations for functions and methods.
+   - Maintain up-to-date API documentation.
+
+---
+
+## Best Practices
+
+### 1. Dependency Management
+- Use `npm` or `yarn` for managing dependencies.
+- Pin versions in `package.json` to ensure reproducibility.
+- Regularly audit dependencies with `npm audit` or `yarn audit`.
+
+### 2. Performance Optimization
+- Use clustering (`cluster` module) for multi-core scaling.
+- Avoid synchronous methods in performance-critical paths.
+- Cache frequent database queries or API responses with `Redis` or similar tools.
+
+### 3. Security Best Practices
+- Sanitize user inputs to prevent injection attacks.
+- Avoid hardcoding sensitive data; use environment variables.
+- Validate all inputs using libraries like `Joi` or `Zod`.
+- Use `helmet` for securing HTTP headers.
+- Keep dependencies up-to-date to patch vulnerabilities.
+
+### 4. Testing and CI/CD
+- Write unit tests with `Jest` or `Mocha`.
+- Use `supertest` for integration tests in Express applications.
+- Automate tests and deployments with CI/CD pipelines (e.g., GitHub Actions, Jenkins).
+
+### 5. Logging and Monitoring
+- Use a structured logging library like `winston` or `pino`.
+- Monitor application performance with tools like `PM2`, `New Relic`, or `Datadog`.
+- Implement health checks using `express-status-monitor` or similar.
+
+---
+
+## Communication and Collaboration
+
+1. **Code Reviews**
+   - Focus on logic, clarity, and adherence to standards.
+   - Provide constructive feedback and suggest alternatives when necessary.
+
+2. **Documentation Sharing**
+   - Maintain updated `README.md` and API documentation.
+   - Use tools like Swagger/OpenAPI for API documentation.
+
+3. **Knowledge Sharing**
+   - Host regular Node.js workshops or code walkthroughs.
+   - Document lessons learned from solving complex problems.
+
+---
+
+## Continuous Improvement
+
+1. **Retrospectives**
+   - Reflect on completed projects to identify areas for improvement.
+   - Discuss challenges and solutions in team meetings.
+
+2. **Tooling Enhancements**
+   - Explore and adopt new tools or libraries that improve efficiency.
+   - Periodically evaluate the team's development setup.
+
+---
+
+By adhering to these Node.js (JavaScript/TypeScript) specific rules and best practices, the development team can ensure high-quality, scalable, and maintainable server-side applications while leveraging Node.js' strengths and ecosystem.

@@ -1,0 +1,72 @@
+version: '3.8'
+
+services:
+  workspace-service:
+    build: .
+    ports:
+      - "4028:4028"
+    environment:
+      - NODE_ENV=production
+      - PORT=4028
+      # Azure Key Vault settings
+      - AZURE_TENANT_ID=${AZURE_TENANT_ID}
+      - AZURE_CLIENT_ID=${AZURE_CLIENT_ID}
+      - AZURE_CLIENT_SECRET=${AZURE_CLIENT_SECRET}
+      - AZURE_KEY_VAULT_URL=${AZURE_KEY_VAULT_URL}
+      # MongoDB settings
+      - MONGODB_URI=${MONGODB_URI}
+      # Redis settings
+      - REDIS_HOST=${REDIS_HOST}
+      - REDIS_PORT=${REDIS_PORT}
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+      # Service Bus settings
+      - SERVICE_BUS_CONNECTION_STRING=${SERVICE_BUS_CONNECTION_STRING}
+      - SERVICE_BUS_QUEUE_NAME=${SERVICE_BUS_QUEUE_NAME}
+      # API settings
+      - API_KEY=${API_KEY}
+      - CORS_ORIGIN=${CORS_ORIGIN}
+      # Service URLs
+      - AUTH_SERVICE_URL=${AUTH_SERVICE_URL}
+      - ROLE_SERVICE_URL=${ROLE_SERVICE_URL}
+      - SUBSCRIPTION_SERVICE_URL=${SUBSCRIPTION_SERVICE_URL}
+      - USER_PROFILE_SERVICE_URL=${USER_PROFILE_SERVICE_URL}
+    volumes:
+      - ./logs:/app/logs
+    networks:
+      - forsico-network
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:4028/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  mongodb:
+    image: mongo:6
+    container_name: workspace-mongodb
+    restart: unless-stopped
+    environment:
+      - MONGO_INITDB_DATABASE=workspace
+    volumes:
+      - mongodb-data:/data/db
+    ports:
+      - "27017:27017"
+    networks:
+      - workspace-network
+    command: ["--bind_ip", "0.0.0.0"]
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+networks:
+  forsico-network:
+    name: forsico-network
+  workspace-network:
+    name: workspace-network
+    driver: bridge
+
+volumes:
+  mongodb-data:
+    name: workspace-mongodb-data 
