@@ -2,7 +2,10 @@ const { ServiceBusClient } = require("@azure/service-bus");
 
 class ServiceBusConnection {
   constructor() {
-    this.connectionString = process.env.AZURE_SERVICE_BUS_CONNECTION_STRING;
+    // Prefer explicit environment variable, fall back to the value loaded via ConfigManager
+    const config = require('./index');
+    this.connectionString = process.env.AZURE_SERVICE_BUS_CONNECTION_STRING || config.get().azure.serviceBus.connectionString;
+
     if (!this.connectionString) {
       throw new Error('Azure Service Bus connection string is not configured');
     }

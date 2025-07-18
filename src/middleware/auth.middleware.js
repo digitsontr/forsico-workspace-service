@@ -1,5 +1,7 @@
-const authService = require('../services/auth.service');
-const { AuthenticationError } = require('../utils/errors');
+const authService = require("../services/auth.service");
+const userProfileService = require("../services/userProfile.service");
+const { AuthenticationError } = require("../utils/errors");
+const jwt = require("jsonwebtoken");
 
 const authenticate = async (req, res, next) => {
   try {
@@ -7,27 +9,46 @@ const authenticate = async (req, res, next) => {
     const token = authService.extractTokenFromHeader(authHeader);
 
     if (!token) {
-      throw new AuthenticationError('No token provided');
+      throw new AuthenticationError("No token provided");
     }
 
     const validation = await authService.validateToken(token);
-    
+
     if (!validation.isValid) {
       throw new AuthenticationError(validation.message);
     }
 
-    // Store the validated token info in the request for later use
-    req.auth = {
-      token,
-      ...validation
-    };
+    // Parse JWT token to get auth ID
+    const decoded = jwt.decode(token);
+    if (!decoded || !decoded.sub) {
+      throw new AuthenticationError("Invalid token format");
+    }
+
+    try {
+      const userProfile = await userProfileService.getUserProfile(
+        decoded.sub,
+        token
+      );
+
+      console.log("::::::::::::userProfileId::::::::::", userProfile._id);
+
+      req.auth = {
+        token,
+        ...validation,
+        userId: userProfile._id,
+        authId: decoded.sub,
+      };
+    } catch (error) {
+      console.error("Error fetching user profile:", error);
+      throw new AuthenticationError("Failed to fetch user profile");
+    }
 
     next();
   } catch (error) {
     if (error instanceof AuthenticationError) {
       res.status(error.statusCode).json({
         error: error.name,
-        message: error.message
+        message: error.message,
       });
     } else {
       next(error);
@@ -37,5 +58,5 @@ const authenticate = async (req, res, next) => {
 
 module.exports = {
   authenticate,
-  requireAuth: authenticate
-}; 
+  requireAuth: authenticate,
+};

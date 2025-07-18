@@ -39,6 +39,8 @@ class RoleService {
         }
       );
 
+      console.log("permission response", response.data);
+
       return response.data?.data?.hasPermission || false;
     } catch (error) {
       console.error('Error checking permission:', error.message);

@@ -10,16 +10,10 @@ class WorkspaceController {
     this.eventPublisher = new WorkspaceEventPublisher();
   }
 
-  async createWorkspace(req, res) {
+  createWorkspace = async (req, res) => {
     try {
-      const { error } = validateWorkspace(req.body);
-      if (error) {
-        return res.status(400).json({ error: error.details[0].message });
-      }
-
-      const workspace = await this.workspaceService.create(req.body);
+      const workspace = await this.workspaceService.create(req.body, req.auth.userId);
       
-      // Publish workspace created event
       await this.eventPublisher.publishWorkspaceCreated(workspace);
       
       res.status(201).json(workspace);
@@ -29,7 +23,7 @@ class WorkspaceController {
     }
   }
 
-  async updateWorkspace(req, res) {
+  updateWorkspace = async (req, res) => {
     try {
       const { id } = req.params;
       const { error } = validateWorkspace(req.body);
@@ -42,7 +36,6 @@ class WorkspaceController {
         return res.status(404).json({ error: 'Workspace not found' });
       }
 
-      // Publish workspace updated event
       await this.eventPublisher.publishWorkspaceUpdated(workspace);
 
       res.json(workspace);
@@ -52,7 +45,7 @@ class WorkspaceController {
     }
   }
 
-  async addWorkspaceMember(req, res) {
+  addWorkspaceMember = async (req, res) => {
     try {
       const { workspaceId } = req.params;
       const { memberId, role } = req.body;
@@ -62,10 +55,9 @@ class WorkspaceController {
         return res.status(404).json({ error: 'Workspace not found' });
       }
 
-      // Publish member added event
       await this.eventPublisher.publishWorkspaceMemberAdded(
         workspaceId,
-        workspace.tenantId,
+        workspace.subscriptionId,
         memberId,
         role
       );
@@ -77,7 +69,7 @@ class WorkspaceController {
     }
   }
 
-  async getAll(req, res, next) {
+  getAll = async (req, res, next) => {
     try {
       const page = parseInt(req.query.page) || 1;
       const limit = parseInt(req.query.limit) || 10;
@@ -106,7 +98,7 @@ class WorkspaceController {
     }
   }
 
-  async getBySubscription(req, res, next) {
+  getBySubscription = async (req, res, next) => {
     try {
       const { subscriptionId } = req.params;
       const page = parseInt(req.query.page) || 1;
@@ -130,7 +122,7 @@ class WorkspaceController {
     }
   }
 
-  async getMyWorkspaces(req, res, next) {
+  getMyWorkspaces = async (req, res, next) => {
     try {
       const page = parseInt(req.query.page) || 1;
       const limit = parseInt(req.query.limit) || 10;
@@ -155,7 +147,7 @@ class WorkspaceController {
     }
   }
 
-  async getById(req, res, next) {
+  getById = async (req, res, next) => {
     try {
       const { id } = req.params;
       const includeSoftDeleted = req.query.includeSoftDeleted === 'true';
@@ -166,7 +158,6 @@ class WorkspaceController {
         throw new NotFoundError('Workspace not found');
       }
 
-      // Check if user has access to the workspace
       if (!(await this.workspaceService.hasAccess(id, req.auth.userId))) {
         throw new AuthorizationError('You do not have access to this workspace');
       }
@@ -177,17 +168,15 @@ class WorkspaceController {
     }
   }
 
-  async update(req, res, next) {
+  update = async (req, res, next) => {
     try {
       const { id } = req.params;
       const updateData = req.body;
 
-      // Check if user is owner
       if (!(await this.workspaceService.isOwner(id, req.auth.userId))) {
         throw new AuthorizationError('Only workspace owners can update workspace details');
       }
 
-      // Prevent updating certain fields
       delete updateData.id;
       delete updateData.isDeleted;
       delete updateData.deletedAt;
@@ -204,7 +193,6 @@ class WorkspaceController {
         throw new NotFoundError('Workspace not found');
       }
 
-      // Publish workspace updated event
       await this.eventPublisher.publishWorkspaceUpdated(workspace);
 
       res.json(workspace);
@@ -213,11 +201,10 @@ class WorkspaceController {
     }
   }
 
-  async delete(req, res, next) {
+  delete = async (req, res, next) => {
     try {
       const { id } = req.params;
 
-      // Check if user is owner
       if (!(await this.workspaceService.isOwner(id, req.auth.userId))) {
         throw new AuthorizationError('Only workspace owners can delete workspaces');
       }
@@ -228,7 +215,6 @@ class WorkspaceController {
         throw new NotFoundError('Workspace not found');
       }
 
-      // Publish workspace deleted event
       await this.eventPublisher.publishWorkspaceDeleted(workspace);
 
       res.json({ message: 'Workspace deleted successfully', deletionId: workspace.deletionId });
@@ -237,11 +223,10 @@ class WorkspaceController {
     }
   }
 
-  async restore(req, res, next) {
+  restore = async (req, res, next) => {
     try {
       const { id } = req.params;
 
-      // Check if user is owner
       if (!(await this.workspaceService.isOwner(id, req.auth.userId))) {
         throw new AuthorizationError('Only workspace owners can restore workspaces');
       }
@@ -252,7 +237,6 @@ class WorkspaceController {
         throw new NotFoundError('Workspace not found or not deleted');
       }
 
-      // Publish workspace restored event
       await this.eventPublisher.publishWorkspaceRestored(workspace);
 
       res.json(workspace);
@@ -261,12 +245,11 @@ class WorkspaceController {
     }
   }
 
-  async updateProgress(req, res, next) {
+  updateProgress = async (req, res, next) => {
     try {
       const { id } = req.params;
       const { state, comment } = req.body;
 
-      // Check if user is owner
       if (!(await this.workspaceService.isOwner(id, req.auth.userId))) {
         throw new AuthorizationError('Only workspace owners can update progress state');
       }
@@ -288,7 +271,6 @@ class WorkspaceController {
         throw new NotFoundError('Workspace not found');
       }
 
-      // Publish workspace progress updated event
       await this.eventPublisher.publishWorkspaceProgressUpdated(workspace);
 
       res.json(workspace);
@@ -297,68 +279,53 @@ class WorkspaceController {
     }
   }
 
-  async addUsers(req, res, next) {
+  addUsers = async (req, res, next) => {
     try {
       const { id } = req.params;
       const { userIds } = req.body;
-      const token = req.headers.authorization;
 
-      if (!Array.isArray(userIds) || userIds.length === 0) {
-        throw new ValidationError('userIds must be a non-empty array');
+      if (!(await this.workspaceService.isOwner(id, req.auth.userId))) {
+        throw new AuthorizationError('Only workspace owners can add users');
       }
 
-      const result = await this.workspaceService.addUsers(id, userIds, token);
+      const workspace = await this.workspaceService.addUsers(id, userIds);
       
-      if (!result) {
+      if (!workspace) {
         throw new NotFoundError('Workspace not found');
       }
 
-      // Publish member added event
-      await this.eventPublisher.publishWorkspaceMemberAdded(
-        id,
-        result.tenantId,
-        result.owner,
-        result.role
-      );
+      await this.eventPublisher.publishWorkspaceUsersAdded(workspace, userIds);
 
-      res.json(result);
+      res.json(workspace);
     } catch (error) {
       next(error);
     }
   }
 
-  async removeUsers(req, res, next) {
+  removeUsers = async (req, res, next) => {
     try {
       const { id } = req.params;
       const { userIds } = req.body;
 
-      if (!Array.isArray(userIds) || userIds.length === 0) {
-        throw new ValidationError('userIds must be a non-empty array');
+      if (!(await this.workspaceService.isOwner(id, req.auth.userId))) {
+        throw new AuthorizationError('Only workspace owners can remove users');
       }
 
-      const result = await this.workspaceService.removeUsers(id, userIds);
+      const workspace = await this.workspaceService.removeUsers(id, userIds);
       
-      if (!result) {
+      if (!workspace) {
         throw new NotFoundError('Workspace not found');
       }
 
-      // Publish member removed event
-      await this.eventPublisher.publishWorkspaceMemberRemoved(
-        id,
-        result.tenantId,
-        result.owner,
-        result.role
-      );
+      await this.eventPublisher.publishWorkspaceUsersRemoved(workspace, userIds);
 
-      res.json(result);
+      res.json(workspace);
     } catch (error) {
       next(error);
     }
   }
 }
 
-// Create an instance of the controller
 const workspaceController = new WorkspaceController();
 
-// Export the instance
 module.exports = workspaceController; 

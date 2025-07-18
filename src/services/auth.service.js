@@ -7,7 +7,7 @@ class AuthService {
     this.baseUrl = config.get().auth.serviceUrl;
     this.axiosInstance = axios.create({
       baseURL: this.baseUrl,
-      timeout: 5000 // 5 seconds timeout
+      timeout: 5000
     });
   }
 
@@ -27,14 +27,10 @@ class AuthService {
     } catch (error) {
       console.error('Token validation error:', error.message);
       if (error.response) {
-        // The request was made and the server responded with a status code
-        // that falls out of the range of 2xx
         throw new AuthenticationError(error.response.data.message || 'Invalid token');
       } else if (error.request) {
-        // The request was made but no response was received
         throw new AuthenticationError('Auth service is not responding');
       } else {
-        // Something happened in setting up the request
         throw new AuthenticationError('Failed to validate token');
       }
     }

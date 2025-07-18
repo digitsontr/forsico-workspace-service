@@ -69,7 +69,7 @@ const router = express.Router();
  */
 router.get('/',
   requireAuth,
-  validate(workspaceValidation.getAll),
+  validate(workspaceValidation.schemas.getAll),
   validateSubscription(),
   requirePermission('WORKSPACE.VIEW', 'workspace'),
   workspaceController.getAll
@@ -191,7 +191,7 @@ router.get('/:id',
  */
 router.post('/',
   requireAuth,
-  validate(workspaceValidation.create),
+  validate(workspaceValidation.schemas.create),
   validateSubscription(),
   requirePermission('SUBSCRIPTION.WORKSPACES.CREATE', 'subscription'),
   workspaceController.createWorkspace
@@ -343,7 +343,7 @@ router.get('/subscription/:subscriptionId',
  */
 router.put('/:id',
   requireAuth,
-  validate(workspaceValidation.update),
+  validate(workspaceValidation.schemas.update),
   validateSubscription(),
   requirePermission('WORKSPACE.UPDATE', 'workspace'),
   workspaceController.updateWorkspace
@@ -384,7 +384,7 @@ router.put('/:id',
  */
 router.delete('/:id',
   requireAuth,
-  validate(workspaceValidation.delete),
+  validate(workspaceValidation.schemas.delete),
   validateSubscription(),
   requirePermission('WORKSPACE.DELETE', 'workspace'),
   workspaceController.delete
@@ -420,7 +420,7 @@ router.delete('/:id',
  */
 router.post('/:id/restore',
   requireAuth,
-  validate(workspaceValidation.restore),
+  validate(workspaceValidation.schemas.restore),
   validateSubscription(),
   requirePermission('WORKSPACE.RESTORE', 'workspace'),
   workspaceController.restore
@@ -467,7 +467,7 @@ router.post('/:id/restore',
  */
 router.put('/:id/progress',
   requireAuth,
-  validate(workspaceValidation.updateProgress),
+  validate(workspaceValidation.schemas.updateProgress),
   validateSubscription(),
   requirePermission('WORKSPACE.UPDATE_PROGRESS', 'workspace'),
   workspaceController.updateProgress
@@ -517,7 +517,7 @@ router.put('/:id/progress',
  */
 router.delete('/:id/users',
   requireAuth,
-  validate(workspaceValidation.removeUsers),
+  validate(workspaceValidation.schemas.removeUsers),
   validateSubscription(),
   requirePermission('WORKSPACE.USERS.MANAGE', 'workspace'),
   workspaceController.removeUsers

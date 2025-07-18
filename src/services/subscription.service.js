@@ -10,7 +10,7 @@ class SubscriptionService {
       timeout: 5000
     });
     this.cacheKeyPrefix = 'subscription:';
-    this.cacheTTL = 300; // 5 minutes cache for subscription data
+    this.cacheTTL = 300; 
   }
 
   getCacheKey(subscriptionId) {
@@ -19,7 +19,6 @@ class SubscriptionService {
 
   async getSubscriptionDetails(subscriptionId, token) {
     try {
-      // Try to get from cache first
       const redisClient = redisService.getClient();
       const cachedData = await redisClient.get(this.getCacheKey(subscriptionId));
       
@@ -27,19 +26,17 @@ class SubscriptionService {
         return JSON.parse(cachedData);
       }
 
-      // If not in cache, fetch from service
       const response = await this.axiosInstance.get(
-        `/api/user/subscription/${subscriptionId}`,
+        `api/user/subscription/${subscriptionId}`,
         {
           headers: {
-            'Authorization': `Bearer ${token}`
+            'Token': `${token}`
           }
         }
       );
 
       const subscriptionData = response.data;
 
-      // Cache the response
       await redisClient.setEx(
         this.getCacheKey(subscriptionId),
         this.cacheTTL,
@@ -56,6 +53,7 @@ class SubscriptionService {
   async isSubscriptionValid(subscriptionId, token) {
     try {
       const details = await this.getSubscriptionDetails(subscriptionId, token);
+
       return details.subscription_request.status === 'approved';
     } catch (error) {
       console.error('Error checking subscription validity:', error.message);
@@ -78,10 +76,8 @@ class SubscriptionService {
       const details = await this.getSubscriptionDetails(subscriptionId, token);
       const { user_limit, user_count } = details.subscription_request;
       
-      // If there's no limit, always return true
       if (user_limit === null) return true;
       
-      // Check if adding the new users would exceed the limit
       return (user_count + currentCount) <= user_limit;
     } catch (error) {
       console.error('Error validating user limit:', error.message);

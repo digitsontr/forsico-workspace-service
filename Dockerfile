@@ -1,31 +1,24 @@
-# Build stage
-FROM node:18-alpine AS builder
-
-WORKDIR /app
-
-# Copy package files
-COPY package*.json ./
-
-# Install dependencies
-RUN npm ci
-
-# Copy source code
-COPY . .
-
-# Production stage
 FROM node:18-alpine
 
 WORKDIR /app
 
-# Copy package files and install production dependencies
+# Install production dependencies first for better layer caching
 COPY package*.json ./
 RUN npm ci --only=production
 
-# Copy source code from builder
-COPY --from=builder /app/src ./src
+# Copy application source
+COPY . ./
 
-# Expose port
-EXPOSE 4028
+# Create a non-root user for security
+RUN addgroup -S appgroup && adduser -S appuser -G appgroup && \
+    chown -R appuser:appgroup /app
+USER appuser
+
+EXPOSE 3000
+
+# Health check to ensure container is ready
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+  CMD wget --no-verbose --tries=1 --spider http://localhost:3000/health || exit 1
 
 # Start the application
 CMD ["npm", "start"] 

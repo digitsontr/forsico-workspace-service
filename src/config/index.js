@@ -11,9 +11,12 @@ class ConfigManager {
         uri: process.env.MONGODB_URI
       },
       redis: {
-        host: process.env.REDIS_HOST,
-        port: parseInt(process.env.REDIS_PORT) || 6379,
-        password: process.env.REDIS_PASSWORD
+        host: process.env.REDIS_HOST || 'localhost',
+        port: process.env.REDIS_PORT || 6379,
+        password: process.env.REDIS_PASSWORD,
+        ttl: {
+          permissions: 3600 // 1 hour
+        }
       },
       azure: {
         tenantId: process.env.AZURE_TENANT_ID,
@@ -34,14 +37,19 @@ class ConfigManager {
       role: {
         serviceUrl: process.env.ROLE_SERVICE_URL
       },
+      userProfile: {
+        serviceUrl: process.env.USER_PROFILE_SERVICE_URL
+      },
       logging: {
         level: process.env.LOG_LEVEL || 'info'
-      }
+      },
+      internalApiKey: process.env.INTERNAL_API_KEY,
     };
   }
 
   async loadProductionSecrets() {
-    if (this.config.nodeEnv === 'production') {
+    // Load secrets from Azure Key Vault for any environment other than local development
+    if (this.config.nodeEnv !== 'development') {
       try {
         const credential = new DefaultAzureCredential();
         const secretClient = new SecretClient(this.config.azure.keyVaultUrl, credential);
