@@ -1,6 +1,5 @@
 const mongoose = require('mongoose');
 const config = require('./config');
-const createApp = require('./loaders/app.loader');
 const redisService = require('./services/redis.service');
 
 async function startServer() {
@@ -11,7 +10,9 @@ async function startServer() {
     console.log('Connected to MongoDB');
     
     await redisService.connect();
-    
+
+    // Require the Express app loader after configuration and secrets are ready
+    const createApp = require('./loaders/app.loader');
     const app = createApp();
     const port = config.get().port;
     

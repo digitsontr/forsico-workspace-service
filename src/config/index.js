@@ -11,6 +11,8 @@ class ConfigManager {
         uri: process.env.MONGODB_URI
       },
       redis: {
+        // Prefer full connection string if provided; fall back to host/port
+        connectionString: process.env.REDIS_CONNECTION_STRING,
         host: process.env.REDIS_HOST || 'localhost',
         port: process.env.REDIS_PORT || 6379,
         password: process.env.REDIS_PASSWORD,
@@ -55,15 +57,16 @@ class ConfigManager {
         const secretClient = new SecretClient(this.config.azure.keyVaultUrl, credential);
 
         // Load secrets from Key Vault
-        const [mongoUri, redisPassword, serviceBusConnection] = await Promise.all([
-          secretClient.getSecret('mongodb-uri'),
-          secretClient.getSecret('redis-password'),
-          secretClient.getSecret('servicebus-connection-string')
+        const [mongoUri, redisConnection, serviceBusConnection] = await Promise.all([
+          // Align secret names with naming convention used in Role-Service
+          secretClient.getSecret('WorkspaceService-DbConString'),
+          secretClient.getSecret('Forsico-RedisConnection'),
+          secretClient.getSecret('AuthApi-ServiceBusConnection')
         ]);
 
         // Update config with Key Vault values
         this.config.mongodb.uri = mongoUri.value;
-        this.config.redis.password = redisPassword.value;
+        this.config.redis.connectionString = redisConnection.value;
         this.config.azure.serviceBus.connectionString = serviceBusConnection.value;
       } catch (error) {
         console.error('Error loading secrets from Key Vault:', error);

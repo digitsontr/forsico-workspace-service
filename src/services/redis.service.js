@@ -7,10 +7,18 @@ class RedisService {
   }
 
   async connect() {
-    this.client = Redis.createClient({
-      url: `redis://${config.get().redis.host}:${config.get().redis.port}`,
-      password: config.get().redis.password
-    });
+    const redisConfig = config.get().redis;
+
+    if (redisConfig.connectionString) {
+      // Use full connection string when provided
+      this.client = Redis.createClient({ url: redisConfig.connectionString });
+    } else {
+      // Fallback to discrete host/port configuration
+      this.client = Redis.createClient({
+        url: `redis://${redisConfig.host}:${redisConfig.port}`,
+        password: redisConfig.password
+      });
+    }
 
     this.client.on('error', (err) => console.log('Redis Client Error', err));
     
