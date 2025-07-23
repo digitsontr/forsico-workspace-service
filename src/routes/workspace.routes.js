@@ -429,7 +429,7 @@ router.post('/:id/restore',
 /**
  * @swagger
  * /workspaces/{id}/progress:
- *   put:
+ *   patch:
  *     summary: Update workspace progress
  *     description: Update the progress state of a workspace
  *     tags: [Workspaces]
@@ -465,12 +465,95 @@ router.post('/:id/restore',
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.put('/:id/progress',
+router.patch('/:id/progress',
   requireAuth,
   validate(workspaceValidation.schemas.updateProgress),
   validateSubscription(),
   requirePermission('WORKSPACE.UPDATE_PROGRESS', 'workspace'),
   workspaceController.updateProgress
+);
+
+/**
+ * @swagger
+ * /workspaces/{id}/progress:
+ *   get:
+ *     summary: Get workspace progress
+ *     description: Get the progress state of a workspace
+ *     tags: [Workspaces]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Workspace ID
+ *     responses:
+ *       200:
+ *         description: Workspace progress
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Workspace'
+ *       404:
+ *         description: Workspace not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+router.get('/:id/progress',
+  requireAuth,
+  validate(workspaceValidation.schemas.getById),
+  validateSubscription(),
+  requirePermission('WORKSPACE.VIEW', 'workspace'),
+  workspaceController.getById
+);
+
+/**
+ * @swagger
+ * /workspaces/{id}/ready-status:
+ *   patch:
+ *     summary: Update workspace ready status
+ *     description: Update the ready status of a workspace
+ *     tags: [Workspaces]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Workspace ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - isReady
+ *             properties:
+ *               isReady:
+ *                 type: boolean
+ *     responses:
+ *       200:
+ *         description: Workspace ready status updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Workspace'
+ *       404:
+ *         description: Workspace not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+router.patch('/:id/ready-status',
+  requireAuth,
+  validate(workspaceValidation.schemas.updateReadyStatus),
+  validateSubscription(),
+  requirePermission('WORKSPACE.UPDATE', 'workspace'),
+  workspaceController.update
 );
 
 /**

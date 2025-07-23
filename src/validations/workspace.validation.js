@@ -150,6 +150,16 @@ const schemas = {
       userIds: userIds.required(),
     }),
   },
+
+  // PATCH /workspaces/:id/ready-status
+  updateReadyStatus: {
+    params: Joi.object({
+      id: id.required(),
+    }),
+    body: Joi.object({
+      isReady: Joi.boolean().required(),
+    }),
+  },
 };
 
 module.exports = {
